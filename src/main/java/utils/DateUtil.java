@@ -1,6 +1,8 @@
 package utils;
 
+
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Created by pro on 17/5/5.
@@ -8,8 +10,7 @@ import java.time.LocalDateTime;
 public class DateUtil {
 
     public static String getNowDate(){
-        LocalDateTime d=LocalDateTime.now();
-        return d.getYear()+"-"+d.getMonth()+"-"+d.getDayOfMonth()+"- "
-                +d.getHour()+":"+d.getMinute()+":"+d.getSecond();
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-mm-dd hh:mm:ss"));
+
     }
 }

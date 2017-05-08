@@ -133,24 +133,30 @@ public class RegisterGUI extends javax.swing.JFrame {
         // TODO add your handling code here:
     }
 
+    public void callback(String response){
+        if(response.contains("ok"))
+            status.setText("注册成功");
+        else
+            status.setText(response);
+    }
+
     private void submmitActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-        String info="register!"+"\n"+uname.getText()+"\n"+
-                jPasswordField1.getText()+"\n"+nickname.getText();
+        String info="register!"+"\0"+uname.getText()+"&"+
+                jPasswordField1.getText()+"&"+nickname.getText();
         final String socketKey=uname.getText()+ DateUtil.getNowDate();
         manager.getClientSocket().write(info);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String s= manager.getClientSocket().read();
-                if("ok".equals(s))
-                    status.setText("注册成功");
-                else
-                    status.setText(s);
-//                System.out.println("注册成功");
-            }
-        }).start();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                String s= manager.getClientSocket().read();
+//                if("ok".equals(s))
+//                    status.setText("注册成功");
+//
+////                System.out.println("注册成功");
+//            }
+//        }).start();
 
     }
 
@@ -206,7 +212,15 @@ public class RegisterGUI extends javax.swing.JFrame {
     private javax.swing.JLabel status;
     private javax.swing.JButton login;
     // End of variables declaration
-
+//    private String response;
+//
+//    public String getResponse() {
+//        return response;
+//    }
+//
+//    public void setResponse(String response) {
+//        this.response = response;
+//    }
 
 }
 

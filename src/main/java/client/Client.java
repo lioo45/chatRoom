@@ -12,6 +12,7 @@ public class Client{
     public static void main(String[] args) {
         ClientSocket clientSocket=new ClientSocket("QQ");
         GUIManager manager=new GUIManager(clientSocket);
+        manager.getResponse();
         manager.getLoginGUI().go();
     }
 

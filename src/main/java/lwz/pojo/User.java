@@ -9,10 +9,20 @@ public class User {
 
     private String nickname;
 
+    @Override
+    public String toString() {
+        return nickname;
+    }
+
     public User(String username, String password, String nickname) {
         this.username = username;
         this.password = password;
         this.nickname = nickname;
+    }
+
+    public User(int uid,String nickname){
+        this.uid=uid;
+        this.nickname=nickname;
     }
     public User(){}
 

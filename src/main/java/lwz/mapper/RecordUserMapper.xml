@@ -2,8 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="lwz.mapper.RecordUserMapper" >
   <resultMap id="BaseResultMap" type="lwz.pojo.RecordUser" >
-    <id column="fromid" property="fromid" jdbcType="INTEGER" />
-    <id column="toid" property="toid" jdbcType="INTEGER" />
+    <result column="fromid" property="fromid" jdbcType="INTEGER" />
+    <result column="toid" property="toid" jdbcType="INTEGER" />
     <result column="record" property="record" jdbcType="VARCHAR" />
     <result column="date" property="date" jdbcType="TIMESTAMP" />
   </resultMap>
@@ -82,18 +82,6 @@
       order by ${orderByClause}
     </if>
   </select>
-  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="lwz.pojo.RecordUserKey" >
-    select 
-    <include refid="Base_Column_List" />
-    from record_user
-    where fromid = #{fromid,jdbcType=INTEGER}
-      and toid = #{toid,jdbcType=INTEGER}
-  </select>
-  <delete id="deleteByPrimaryKey" parameterType="lwz.pojo.RecordUserKey" >
-    delete from record_user
-    where fromid = #{fromid,jdbcType=INTEGER}
-      and toid = #{toid,jdbcType=INTEGER}
-  </delete>
   <delete id="deleteByExample" parameterType="lwz.pojo.RecordUserExample" >
     delete from record_user
     <if test="_parameter != null" >
@@ -172,25 +160,5 @@
     <if test="_parameter != null" >
       <include refid="Update_By_Example_Where_Clause" />
     </if>
-  </update>
-  <update id="updateByPrimaryKeySelective" parameterType="lwz.pojo.RecordUser" >
-    update record_user
-    <set >
-      <if test="record != null" >
-        record = #{record,jdbcType=VARCHAR},
-      </if>
-      <if test="date != null" >
-        date = #{date,jdbcType=TIMESTAMP},
-      </if>
-    </set>
-    where fromid = #{fromid,jdbcType=INTEGER}
-      and toid = #{toid,jdbcType=INTEGER}
-  </update>
-  <update id="updateByPrimaryKey" parameterType="lwz.pojo.RecordUser" >
-    update record_user
-    set record = #{record,jdbcType=VARCHAR},
-      date = #{date,jdbcType=TIMESTAMP}
-    where fromid = #{fromid,jdbcType=INTEGER}
-      and toid = #{toid,jdbcType=INTEGER}
   </update>
 </mapper>

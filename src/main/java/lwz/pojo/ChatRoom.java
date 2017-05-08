@@ -7,6 +7,19 @@ public class ChatRoom {
 
     private String description;
 
+    public ChatRoom(Integer ctid, String name, String description) {
+        this.ctid = ctid;
+        this.name = name;
+        this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
+    public ChatRoom(){}
+
     public Integer getCtid() {
         return ctid;
     }

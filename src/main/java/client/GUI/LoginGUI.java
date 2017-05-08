@@ -111,13 +111,8 @@ public class LoginGUI extends javax.swing.JFrame {
         pack();
     }
 
-    private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
-//        System.out.println(unameField.getText());
-//        System.out.println(jPasswordField2.getPassword());
-        String params="login!"+"\n"+unameField.getText()+"\n"+jPasswordField2.getText();
-        manager.getClientSocket().write(params);
-        String result[]=manager.getClientSocket().read().split("\n");
+    public void callback(String response){
+        String result[]=response.split("\n");
         String header=result[0];
         if(header.contains("ok")) {
             setVisible(false);
@@ -125,12 +120,23 @@ public class LoginGUI extends javax.swing.JFrame {
             String userInfo[]=result[1].split("&");
             manager.setUid(userInfo[0]);
             manager.setNickname(userInfo[1]);
-            ChatRoomGUI cr=manager.getChatRoomGUI();
-            cr.go();
+//            ChatRoomGUI cr=manager.getChatRoomGUI();
+            LoginAtferMainGUI lamgui=manager.getLoginAtferMainGUI();
+            lamgui.go();
 
         }else{
             status.setText(header);
         }
+    }
+
+    private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        // TODO add your handling code here:
+//        System.out.println(unameField.getText());
+//        System.out.println(jPasswordField2.getPassword());
+        String params="login!"+"\0"+unameField.getText()+"&"+jPasswordField2.getText();
+        manager.getClientSocket().write(params);
+//        String result[]=manager.getClientSocket().read().split("\0");
+
 //        GUIManager.getChatRoomGUI().go();
     }
 
@@ -185,5 +191,14 @@ public class LoginGUI extends javax.swing.JFrame {
     private javax.swing.JLabel status;
     // End of variables declaration
 
+//    private String response;
+//
+//    public String getResponse() {
+//        return response;
+//    }
+//
+//    public void setResponse(String response) {
+//        this.response = response;
+//    }
 
 }

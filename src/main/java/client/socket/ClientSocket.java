@@ -14,7 +14,7 @@ public class ClientSocket {
 
     private  final int TIME_OUT=10000;
 
-    private Socket socket;
+    private volatile Socket socket;
 
     private String ipAddr="127.0.0.1";
 
@@ -40,8 +40,11 @@ public class ClientSocket {
     }
 
     public  Socket getSocket(){
-        if(socket==null||socket.isClosed())
-            createConnect();
+        if(socket==null||socket.isClosed()) {
+            synchronized (this) {
+                createConnect();
+            }
+        }
         return socket;
     }
 

@@ -3,11 +3,6 @@ package client.GUI;
 /**
  * Created by pro on 17/5/5.
  */
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 import java.awt.*;
 
@@ -20,7 +15,15 @@ public class ErrorGUI extends javax.swing.JFrame {
 
     private GUIManager manager;
 
+    private String response;
 
+    public String getResponse() {
+        return response;
+    }
+
+    public void setResponse(String response) {
+        this.response = response;
+    }
     public ErrorGUI(String error) throws HeadlessException {
         this.error = error;
         initComponents();

@@ -1,12 +1,16 @@
 package server;
 
+import lwz.pojo.ChatRoom;
+import lwz.pojo.RecordChatroom;
+import lwz.pojo.RecordUser;
 import lwz.pojo.User;
+import lwz.service.RecordService;
 import lwz.service.UserService;
+import utils.DateUtil;
 import utils.SpringUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.*;
@@ -22,7 +26,17 @@ public class KeyHandler {
 
     private  Map<SelectionKey,String> keyToUser=new HashMap<SelectionKey, String>();
 
-    UserService service= (UserService) SpringUtil.getBean(UserService.class);
+    private UserService service= (UserService) SpringUtil.getBean(UserService.class);
+
+    private RecordService recordService= (RecordService) SpringUtil.getBean(RecordService.class);
+
+
+    private Map<String,Set<String>> getUidByRoom=new HashMap<String, Set<String>>();
+
+    private Map<String,String> userInfo=new HashMap<String, String>();
+
+//    private Set<String> hadGet=new HashSet<String>();
+
 
     private final int BUFFER_SIZE=4;
 
@@ -51,6 +65,7 @@ public class KeyHandler {
             String uid=keyToUser.get(key);
             userSelectionKeys.remove(uid);
             keyToUser.remove(key);
+//            hadGet.remove(uid);
             try {
                 key.channel().close();
             } catch (IOException e1) {
@@ -97,35 +112,170 @@ public class KeyHandler {
         }
         //用户注册
         if(message.contains("register!")){
-            String params[]=message.split("\n");
+            String params[]=message.split("\0");
             User user=new User(params[1],params[2],params[3]);
-            String result=service.addUser(user)>0?"ok\0":"failure\0";
+            String header="register:";
+            String result=header+(service.addUser(user)>0?"ok":"failure")+"\n";
             write(result,key);
             return ;
         }else if(message.contains("login!")){
             //用户登录
-            String params[]=message.split("\n");
+            String params[]=message.split("\0")[1].split("&");
             String result;
-            if(params==null||params.length<3) {
-                result="用户名密码不能为空";
+            if(params==null||params.length<2) {
+                result="login:用户名密码不能为空\n";
             }
             else {
-                result = service.login(params[1], params[2]);
-                System.out.println(result);
+                result = service.login(params[0], params[1]);
+//                System.out.println(result);
+                if(result.contains("ok")) {
+                    String uid = result.split("\n")[1].split("&")[0];
+                    String nickname = result.split("\n")[1].split("&")[1];
+                    userInfo.put(uid, nickname);
+                    userSelectionKeys.put(uid, key);
+                    keyToUser.put(key, uid);
+                }
             }
-            userSelectionKeys.put(params[1],key);
-            keyToUser.put(key,params[1]);
             write(result,key);
             return ;
-        }else if(message.contains("message:121!")){
+        }else if(message.contains("get:friends!")){
+            String params[]=message.split("\0");
+//            System.out.println(message);
+            System.out.println("param: "+params[1]);
+            List<User> friends=service.getFriends(new Integer(params[1]));
+            StringBuilder sb=new StringBuilder();
+            sb.append("get:friend ok!\n");
+            if(friends!=null) {
+//                sb.append(friends.size() + "\n");
+                for (int i = 0; i < friends.size(); i++) {
+                    User f = friends.get(i);
+                    sb.append(f.getUid() + "," + f.getNickname() + "\n");
+                }
+            }
+            write(sb.toString(),key);
+        }else if(message.contains("get:chatroom!")){
+            String params[]=message.split("\0")[1].split("&");
+            List<ChatRoom> rooms=service.getChatRooms(new Integer(params[0]));
+            StringBuilder sb=new StringBuilder();
+            sb.append("get:chatroom ok!\n");
+            if(rooms!=null) {
+                for (int i = 0; i < rooms.size(); i++) {
+                    ChatRoom cr = rooms.get(i);
+                    sb.append(cr.getCtid() + "," + cr.getName() + "," + cr.getDescription() + "\n");
+                }
+            }
+            write(sb.toString(),key);
+        } else if(message.contains("message:121!")){
+//            String header=message.substring(0,message.indexOf("\0"));
+            String info=message.substring(message.indexOf("\0")+1);
+            String params[]=info.substring(0,info.indexOf("\0")).split("&");
+            info=info.substring(info.indexOf("\0")+1);
+            String uid=params[0];
+            String friendId=params[1];
+            SelectionKey key1=userSelectionKeys.get(friendId);
+            String responseHeaderOfSender="message:121\n"+uid+"&"+friendId+"\n";
+            String responseHeaderOfReceiver="message:121\n"+friendId+"&"+uid+"\n";
 
-        }else if(message.contains("message:12n!")){
+            String responseInfo=DateUtil.getNowDate()+"\n"+info+"\n";
+            //回显给发送方
+            write(responseHeaderOfSender+responseInfo,key);
+            //回显给好友
+            write(responseHeaderOfReceiver+responseInfo,key1);
 
+            //聊天记录写入数据库
+            recordService.addRecord(new RecordUser(new Integer(uid),
+                    new Integer(friendId),responseInfo,new Date()));
+
+        } else if(message.contains("message:12n!")){
+//            System.out.println(message);
+            String header=message.substring(0,message.indexOf("\0"));
+            String info=message.substring(message.indexOf("\0")+1);
+            String params[]=info.substring(0,info.indexOf("\0")).split("&");
+
+            info=info.substring(info.indexOf("\0")+1);
+
+//            System.out.println(header);
+//            System.out.println(info);
+            //广播
+            String ctid=params[1];
+            Set<String> uids=getUidByRoom.get(ctid);
+            String responeHeader="message:12n\n"+params[0]+"&"+params[1]+"\n";
+            for(String uid:uids){
+                SelectionKey k=userSelectionKeys.get(uid);
+                if(k!=null) {
+                    String date=DateUtil.getNowDate();
+                    recordService.addRecord(
+                            new RecordChatroom(new Integer(ctid),new Integer(uid),date+"\n"+info+"\n",new Date()));
+
+                    write(responeHeader + date + "\n" + info + "\n", k);
+                }
+                else {
+                    uids.remove(uid);
+                    System.out.println("用户断开连接,Uid: "+uid);
+                }
+            }
+
+        }else if(message.contains("header:enter room!")){
+
+            String[] params=message.substring(message.indexOf("\0")+1).split("&");
+            String ctid=params[1];
+            String uid=params[0];
+            Set<String> set=getUidByRoom.get(params[1]);
+//            System.out.println("roomid:"+params[1]);
+            if(set==null) {
+                set = new HashSet<String>();
+                getUidByRoom.put(params[1],set);
+            }
+            if(!set.contains(uid)) {
+                set.add(uid);
+                //回显聊天记录
+                List<RecordChatroom> records =
+                        recordService.getRecordsOrderByDate(new Integer(ctid));
+                if(records!=null) {
+                    StringBuilder sb = new StringBuilder("header:record room!\n");
+                    sb.append(ctid + "\n");
+                    for (RecordChatroom record : records) {
+                        sb.append(record.getRecord() + "\n");
+                    }
+                    System.out.println(sb.toString());
+                    write(sb.toString(), key);
+                    dealWrite(key);
+                }
+                StringBuilder people=new StringBuilder();
+                //回显聊天时的在线情况
+                for(String uid1:set){
+                    people.append(uid1+": "+userInfo.get(uid1)+"\n");
+                }
+                String header="header:room people!\n"+ctid+"\n";
+                for(String uid2:getUidByRoom.get(ctid)) {
+                    SelectionKey k1=userSelectionKeys.get(uid2);
+                    write(header + people.toString(), k1);
+                }
+            }
+
+
+        }else if(message.contains("header:exit room!")){
+            String[] params=message.split("\0")[1].split("&");
+            String uid=params[0];
+            String ctid=params[1];
+            //在该聊天室移除相应的用户.
+            getUidByRoom.get(ctid).remove(uid);
+
+        }else if(message.contains("get:message 121")){
+            //获取好友聊天记录
+            String params[]=message.substring(message.indexOf("\0")+1).split("&");
+            StringBuilder sb = new StringBuilder();
+            List<RecordUser> records = recordService.getUserRecord(params[0], params[1]);
+            String responseHeader = "message:121 \n" + params[0] + "&" + params[1] + "\n";
+            if (records != null) {
+                for (RecordUser r : records) {
+                    System.out.println("聊天记录:" + r.getRecord());
+                    sb.append(r.getRecord() + "\n");
+                }
+            }
+            write(responseHeader + sb.toString(), key);
         }
-        //广播信息
-//        for (SelectionKey k : selectionKeys) {
-//           write(message,k);
-//        }
+
     }
 
     private  void dealWrite(SelectionKey key) throws IOException {
