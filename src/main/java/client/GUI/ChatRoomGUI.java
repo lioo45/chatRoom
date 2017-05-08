@@ -184,7 +184,7 @@ public class ChatRoomGUI extends javax.swing.JFrame {
             String message = "server is close,please try login again";
             System.out.println(message);
             setVisible(false);
-            manager.getErrorGUI().showJ();
+            manager.getErrorGUI().showJ(message);
             return ;
         }
         //去掉请求头和参数
