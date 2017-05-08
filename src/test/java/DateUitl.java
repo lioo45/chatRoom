@@ -1,4 +1,5 @@
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
@@ -8,14 +9,16 @@ public class DateUitl {
 
     public static String getNowDate(){
         LocalDateTime d=LocalDateTime.now();
-        return d.getYear()+"-"+d.getMonth()+"-"+d.getDayOfMonth()+"- "
-                +d.getHour()+":"+d.getMinute()+":"+d.getSecond();
+        System.out.println(d.toString());
+//        return d.getYear()+"-"+d.getMonth()+"-"+d.getDayOfMonth()+"- "
+        return null;
+//                +d.getHour()+":"+d.getMinute()+":"+d.getSecond();
     }
 
     public static void main(String[] args) {
-        String s="aaaasdgsdf";
-        String s1[]=s.split("1");
-        System.out.println(s1[0]);
-
+        LocalDateTime d=LocalDateTime.now();
+        System.out.println(d.toString());
+        String s=LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-mm-dd hh:mm:ss"));
+        System.out.println(s);
     }
 }
